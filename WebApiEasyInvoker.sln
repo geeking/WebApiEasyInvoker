@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApiEasyInvoker", "WebApi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XUnitTestWebApiEasyInvoker", "XUnitTestWebApiEasyInvoker\XUnitTestWebApiEasyInvoker.csproj", "{2F97FB7B-0E76-46C4-853E-5E94292995DC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DispatchProxyAsync", "DispatchProxyAsync\DispatchProxyAsync.csproj", "{9BED740A-0C3E-479D-B309-2B36A40C2E50}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DispatchProxyAsync", "DispatchProxyAsync\DispatchProxyAsync.csproj", "{9BED740A-0C3E-479D-B309-2B36A40C2E50}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
