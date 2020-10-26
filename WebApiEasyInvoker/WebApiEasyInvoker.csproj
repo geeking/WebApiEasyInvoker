@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Company />
+    <Authors>xiaozg</Authors>
+    <Description>very easy to use httpclient for webapi. call remote methods like local methods. support async methods too.
+让远程方法（api接口）像本地方法一样方便调用，支持异步。</Description>
+    <PackageTags>webapi,easyinvoke,httpclientfactory</PackageTags>
+    <PackageProjectUrl>https://github.com/geeking/WebApiEasyInvoker</PackageProjectUrl>
+    <Copyright>MIT License</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
