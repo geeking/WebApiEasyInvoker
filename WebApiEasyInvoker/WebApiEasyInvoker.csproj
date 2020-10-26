@@ -8,7 +8,8 @@
 让远程方法（api接口）像本地方法一样方便调用，支持异步。</Description>
     <PackageTags>webapi,easyinvoke,httpclientfactory</PackageTags>
     <PackageProjectUrl>https://github.com/geeking/WebApiEasyInvoker</PackageProjectUrl>
-    <Copyright>MIT License</Copyright>
+    <Copyright>xiaozg</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
