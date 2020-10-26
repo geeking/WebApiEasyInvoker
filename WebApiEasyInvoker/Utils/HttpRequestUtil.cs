@@ -102,7 +102,7 @@ namespace WebApiEasyInvoker.Utils
                     var httpUrlAttribute = methodInfo.GetCustomAttribute<HttpUrlAttribute>();
                     if (httpUrlAttribute == null)
                     {
-                        throw new NullReferenceException($"Can't find {nameof(httpUrlAttribute)} form {methodInfo.Name}");
+                        throw new NullReferenceException($"Can't find {nameof(HttpUrlAttribute)} for {methodInfo.Name}");
                     }
                     host = httpHostAttribute.HttpHost;
                     url = httpUrlAttribute.Url;
@@ -110,16 +110,8 @@ namespace WebApiEasyInvoker.Utils
                 }
                 else
                 {
-                    var consulServiceAttribute = targetType.GetCustomAttribute<ConsulServiceAttribute>();
-                    if (consulServiceAttribute != null)
-                    {
-                        var consulPathAttribute = methodInfo.GetCustomAttribute<ConsulPathAttribute>();
-                        if (consulPathAttribute == null)
-                        {
-                            throw new NullReferenceException($"Can't find {nameof(ConsulPathAttribute)} form {methodInfo.Name}");
-                        }
-                        //todo
-                    }
+                    throw new NullReferenceException($"Can't find {nameof(HttpHostAttribute)} for {targetType.Name}");
+
                 }
             }
             var fullUrl = CombinUrlAndReplacePlaceholder(argInfos, host, url);
