@@ -13,16 +13,7 @@ namespace WebApiEasyInvoker.Utils
         /// <returns></returns>
         public static T DeserializeObject<T>(string input)
         {
-            T result = default;
-
-            if (string.IsNullOrEmpty(input))
-            {
-                return result;
-            }
-
-            result = (T)DeserializeObject(typeof(T), input);
-
-            return result;
+            return (T)DeserializeObject(typeof(T), input);
         }
 
         /// <summary>

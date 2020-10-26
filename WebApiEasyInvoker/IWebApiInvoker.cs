@@ -3,7 +3,7 @@
 namespace WebApiEasyInvoker
 {
     /// <summary>
-    /// web api base interface for auto invoke
+    /// web api base interface for auto building proxy implementation class
     /// </summary>
     /// <typeparam name="ITarget">the interface be proxyed</typeparam>
     public interface IWebApiInvoker<ITarget>

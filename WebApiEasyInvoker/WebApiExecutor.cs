@@ -71,7 +71,7 @@ namespace WebApiEasyInvoker
             var requestMessage = HttpRequestUtil.BuildHttpRequestMessage(_httpConfig?.RequestHeaders, targetMethod, argInfos);
             _httpConfig?.Logger?.LogDebug("Request url:{0} {1}", requestMessage.Method, requestMessage.RequestUri.AbsoluteUri);
 
-            var response = _httpClient.SendAsync(requestMessage).Result;
+            var response = _httpClient.SendAsync(requestMessage).ConfigureAwait(false).GetAwaiter().GetResult();
             var content = response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             return ConvertUtil.DeserializeObject(targetMethod.ReturnType, content);
         }
