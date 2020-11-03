@@ -15,13 +15,20 @@ namespace WebApiEasyInvoker.Utils
     {
         private static string CombinUrlAndReplacePlaceholder(List<MethodArgumentInfo> argumentInfos, string host, string url)
         {
-            if (string.IsNullOrEmpty(url))
+            if (string.IsNullOrEmpty(host) && string.IsNullOrEmpty(url))
             {
-                return url;
+                return null;
             }
             if (!string.IsNullOrWhiteSpace(host))
             {
-                url = $" {host.TrimEnd('/')}/{url.TrimStart('/')}";
+                if (string.IsNullOrEmpty(url))
+                {
+                    url = $"{host.TrimEnd('/')}";
+                }
+                else
+                {
+                    url = $"{host.TrimEnd('/')}/{url.TrimStart('/')}";
+                }
             }
             foreach (var item in argumentInfos)
             {

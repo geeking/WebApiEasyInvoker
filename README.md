@@ -6,7 +6,7 @@ Very easy to use httpclient for webapi. call remote methods like local methods. 
 2. Define a interface which inherit `IWebApiInvoker<T>`
 3. Define interface method
 4. Chose and use `HttpFullUrlAttribute`,`HttpHostAttribute`,`HttpUrlAttribute` ... to decorate interface or method
-5. Use `WebApiExecutionGenerator<T>.Create()` to auto build an excutor
+5. Use `WebApiExecutionGenerator.Create<T>()` to auto build an excutor
 6. Use the excutor 
 
 ***
@@ -32,7 +32,7 @@ public interface IArgumentTest : IWebApiInvoker<IArgumentTest>
 }
 ```
 ```csharp
-var test = WebApiExecutionGenerator<ITest>.Create();
+var test = WebApiExecutionGenerator.Create<ITest>();
 var response = test.TestFullUrl();
 Console.WriteLine(response);
 var response1 = await test.TestFullUrlAsync();
@@ -41,6 +41,58 @@ Console.WriteLine(response1);
 
 Also you can inject the excutor if you have a `DI` module.
 
+*For example(Asp.net core)*
+
+1. in `Startup.ConfigureServices` method
+```csharp
+services.AddWebApiEasyInvoker();
+```
+
+2. defined `IServiceB` interface
+```csharp
+using WebApiEasyInvoker;
+using WebApiEasyInvoker.Attributes;
+
+namespace ServiceA.ThirdService
+{
+    [HttpHost("http://localhost:5402/WeatherForecast")]
+    public interface IServiceB : IWebApiInvoker<IServiceB>
+    {
+        [HttpUrl("")]
+        List<WeatherForecast> GetWeathers();
+    }
+}
+```
+
+3. inject `IServiceB` to the place you want to use
+```csharp
+namespace ServiceA.Controllers
+{
+    [ApiController]
+    [Route("[controller]")]
+    public class WeatherForecastController : ControllerBase
+    {
+        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly IServiceB _serviceB;
+
+        public WeatherForecastController(ILogger<WeatherForecastController> logger,
+            IServiceB serviceB)
+        {
+            _logger = logger;
+            //config if necessary
+            _serviceB = serviceB.Config(new HttpConfig { Logger = logger });
+        }
+
+        [HttpGet]
+        public IEnumerable<WeatherForecast> Get()
+        {
+            //will request to serviceB web api: get http://localhost:5402/WeatherForecast
+            var serviceBData = _serviceB.GetWeathers();
+            return serviceBData;
+        }
+    }
+}
+```
 
 ## Advanced Usage
 If you have a string like `{name}` in `Http*Attribute` and also a argument have the same `name`,the value of the argument will replace the `{name}` placeholder.
@@ -57,7 +109,7 @@ public interface IArgumentTest : IWebApiInvoker<IArgumentTest>
 public static void main()
 {
     //the request url will be http://localhost:49386/api/students/c1
-    WebApiExecutionGenerator<IArgumentTest>.Create().TestFormRequest1("c1",student);
+    WebApiExecutionGenerator.Create<IArgumentTest>().TestFormRequest1("c1",student);
 }
 ```
 
@@ -87,7 +139,7 @@ public static void main()
         Age = 20
     };
     //the request url will be http://localhost:49386/api/students/c1?Name=bob&Age=20
-    WebApiExecutionGenerator<IArgumentTest>.Create().TestFormRequest1("c1",student);
+    WebApiExecutionGenerator.Create<IArgumentTest>().TestFormRequest1("c1",student);
 }
 ```
 
@@ -115,7 +167,6 @@ public class HttpConfig
 ```
 
 # Future
-* DI extend package
 * Polly in build
 * Consul extend package
 * Eureka extend package

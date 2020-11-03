@@ -19,7 +19,7 @@ namespace XUnitTestWebApiEasyInvoker
 
             //var response1 = await WebApiExecutionGenerator<ITest>.Create().TestFullUrlAsync();
 
-            var response = WebApiExecutionGenerator<ITest>.Create().TestFullUrl();
+            var response = WebApiExecutionGenerator.Create<ITest>().TestFullUrl();
             Console.WriteLine(response);
             Assert.False(string.IsNullOrEmpty(response));
         }
@@ -27,7 +27,7 @@ namespace XUnitTestWebApiEasyInvoker
         [Fact]
         public async void TestReturnType()
         {
-            var retTest = WebApiExecutionGenerator<IReturnTypeTest>.Create();
+            var retTest = WebApiExecutionGenerator.Create<IReturnTypeTest>();
 
             var a0 = retTest.RetBool();
             var a1 = retTest.RetByte();
@@ -56,7 +56,7 @@ namespace XUnitTestWebApiEasyInvoker
         public void TestToBodyForm1()
         {
 
-            var argTest = WebApiExecutionGenerator<IArgumentTest>.Create();
+            var argTest = WebApiExecutionGenerator.Create<IArgumentTest>();
             var a1 = new Student { Name = "test", Age = 12 };
             argTest.TestFormRequest1(a1);
         }
@@ -64,7 +64,7 @@ namespace XUnitTestWebApiEasyInvoker
         [Fact]
         public void TestToBodyForm2()
         {
-            var argTest = WebApiExecutionGenerator<IArgumentTest>.Create();
+            var argTest = WebApiExecutionGenerator.Create<IArgumentTest>();
             argTest.TestFormRequest2("foo");
         }
     }

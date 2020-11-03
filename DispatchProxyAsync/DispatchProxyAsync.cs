@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DispatchProxyAsync
@@ -9,6 +10,8 @@ namespace DispatchProxyAsync
         {
             return (T)AsyncDispatchProxyGenerator.CreateProxyInstance(typeof(TProxy), typeof(T));
         }
+
+        public static object Create(Type baseType, Type interfaceType) => AsyncDispatchProxyGenerator.CreateProxyInstance(baseType, interfaceType);
 
         public abstract object Invoke(MethodInfo targetMethod, object[] args);
 
