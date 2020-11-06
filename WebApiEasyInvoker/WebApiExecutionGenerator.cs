@@ -18,9 +18,11 @@ namespace WebApiEasyInvoker
         /// <summary>
         /// build the executor for target interface
         /// </summary>
+        /// <param name="interfaceType"></param>
         /// <returns></returns>
-        public static object Create(Type baseType, Type interfaceType)
+        public static object Create(Type interfaceType)
         {
+            var baseType = typeof(WebApiExecutor<>).MakeGenericType(interfaceType);
             return DispatchProxyAsync.DispatchProxyAsync.Create(baseType, interfaceType);
         }
     }

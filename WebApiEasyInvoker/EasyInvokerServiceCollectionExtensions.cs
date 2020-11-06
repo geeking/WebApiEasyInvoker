@@ -18,8 +18,7 @@ namespace WebApiEasyInvoker
                 {
                     if (t.IsInterface && t.GetInterface("IWebApiInvoker`1", true) != null)
                     {
-                        var baseType = typeof(WebApiExecutor<>).MakeGenericType(t);
-                        services.AddScoped(t, p => WebApiExecutionGenerator.Create(baseType, t));
+                        services.AddScoped(t, p => WebApiExecutionGenerator.Create(t));
                     }
                 });
             }
