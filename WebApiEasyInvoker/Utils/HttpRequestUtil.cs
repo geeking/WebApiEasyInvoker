@@ -11,7 +11,7 @@ using WebApiEasyInvoker.Models;
 
 namespace WebApiEasyInvoker.Utils
 {
-    internal static class HttpRequestUtil
+    public static class HttpRequestUtil
     {
         private static string CombinUrlAndReplacePlaceholder(List<MethodArgumentInfo> argumentInfos, string host, string url)
         {
@@ -32,6 +32,7 @@ namespace WebApiEasyInvoker.Utils
             }
             foreach (var item in argumentInfos)
             {
+                //has ToBody or ToQuery Attribute,then jump
                 if (item.Attributes.Any())
                 {
                     continue;
@@ -89,39 +90,9 @@ namespace WebApiEasyInvoker.Utils
             return queryString;
         }
 
-        private static (HttpMethod HttpMethod, string FullUrl) GetHttpRequestMethodAndUrl(MethodInfo methodInfo, List<MethodArgumentInfo> argInfos)
+        private static (HttpMethod HttpMethod, string FullUrl) GetHttpRequestMethodAndUrl(UrlTemplate urlTemplate, List<MethodArgumentInfo> argInfos)
         {
-            string host = null, url = null;
-            HttpMethod httpMethod = HttpMethod.Get;
-
-            var httpFullUrlAttribute = methodInfo.GetCustomAttribute<HttpFullUrlAttribute>();
-            if (httpFullUrlAttribute != null)
-            {
-                url = httpFullUrlAttribute.Url;
-                httpMethod = httpFullUrlAttribute.HttpMethod;
-            }
-            else
-            {
-                var targetType = methodInfo.DeclaringType;
-                var httpHostAttribute = targetType.GetCustomAttribute<HttpHostAttribute>();
-                if (httpHostAttribute != null)
-                {
-                    var httpUrlAttribute = methodInfo.GetCustomAttribute<HttpUrlAttribute>();
-                    if (httpUrlAttribute == null)
-                    {
-                        throw new NullReferenceException($"Can't find {nameof(HttpUrlAttribute)} for {methodInfo.Name}");
-                    }
-                    host = httpHostAttribute.HttpHost;
-                    url = httpUrlAttribute.Url;
-                    httpMethod = httpUrlAttribute.HttpMethod;
-                }
-                else
-                {
-                    throw new NullReferenceException($"Can't find {nameof(HttpHostAttribute)} for {targetType.Name}");
-
-                }
-            }
-            var fullUrl = CombinUrlAndReplacePlaceholder(argInfos, host, url);
+            var fullUrl = CombinUrlAndReplacePlaceholder(argInfos, urlTemplate.Host, urlTemplate.Url);
             if (string.IsNullOrEmpty(fullUrl))
             {
                 throw new Exception("Request url is null or empty");
@@ -138,7 +109,7 @@ namespace WebApiEasyInvoker.Utils
                     fullUrl += "?" + queryString;
                 }
             }
-            return (httpMethod, fullUrl);
+            return (urlTemplate.HttpMethod, fullUrl);
         }
 
         private static HttpContent GetHttpRequestContent(List<MethodArgumentInfo> argInfos)
@@ -172,7 +143,6 @@ namespace WebApiEasyInvoker.Utils
                 {
                     strContent = ConvertUtil.SerializeObjectJson(argInfo.Value);
                 }
-
             }
             var contentBytes = Encoding.UTF8.GetBytes(strContent);
             HttpContent content = new StreamContent(new MemoryStream(contentBytes));
@@ -180,7 +150,46 @@ namespace WebApiEasyInvoker.Utils
             return content;
         }
 
-        public static HttpRequestMessage BuildHttpRequestMessage(HttpRequestHeaders requestHeaders, MethodInfo methodInfo, List<MethodArgumentInfo> argInfos)
+        public static UrlTemplate BuildUrlTemplate(MethodInfo methodInfo)
+        {
+            string host = null, url = null;
+            HttpMethod httpMethod = HttpMethod.Get;
+
+            var httpFullUrlAttribute = methodInfo.GetCustomAttribute<HttpFullUrlAttribute>();
+            if (httpFullUrlAttribute != null)
+            {
+                url = httpFullUrlAttribute.Url;
+                httpMethod = httpFullUrlAttribute.HttpMethod;
+            }
+            else
+            {
+                var targetType = methodInfo.DeclaringType;
+                var httpHostAttribute = targetType.GetCustomAttribute<HttpHostAttribute>();
+                if (httpHostAttribute != null)
+                {
+                    var httpUrlAttribute = methodInfo.GetCustomAttribute<HttpUrlAttribute>();
+                    if (httpUrlAttribute == null)
+                    {
+                        throw new Exception($"Can't build request url for {methodInfo.Name}");
+                    }
+                    host = httpHostAttribute.HttpHost;
+                    url = httpUrlAttribute.Url;
+                    httpMethod = httpUrlAttribute.HttpMethod;
+                }
+                else
+                {
+                    throw new Exception($"Can't build request url for {targetType.Name}");
+                }
+            }
+            return new UrlTemplate
+            {
+                Host = host,
+                Url = url,
+                HttpMethod = httpMethod
+            };
+        }
+
+        public static HttpRequestMessage BuildHttpRequestMessage(HttpRequestHeaders requestHeaders, List<MethodArgumentInfo> argInfos, UrlTemplate urlTemplate)
         {
             var httpRequestMessage = new HttpRequestMessage();
             if (requestHeaders != null)
@@ -190,10 +199,9 @@ namespace WebApiEasyInvoker.Utils
                     httpRequestMessage.Headers.Add(header.Key, header.Value);
                 }
             }
-
-            var tmp = GetHttpRequestMethodAndUrl(methodInfo, argInfos);
-            httpRequestMessage.RequestUri = new Uri(tmp.FullUrl);
-            httpRequestMessage.Method = tmp.HttpMethod;
+            var (httpMethod, fullUrl) = GetHttpRequestMethodAndUrl(urlTemplate, argInfos);
+            httpRequestMessage.RequestUri = new Uri(fullUrl);
+            httpRequestMessage.Method = httpMethod;
             httpRequestMessage.Content = GetHttpRequestContent(argInfos);
 
             return httpRequestMessage;

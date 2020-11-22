@@ -5,7 +5,7 @@ using System.Text;
 namespace WebApiEasyInvoker.Attributes
 {
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    public class ToQueryAttribute : Attribute
+    public sealed class ToQueryAttribute : Attribute
     {
     }
 }

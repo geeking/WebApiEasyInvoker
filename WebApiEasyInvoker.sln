@@ -11,9 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DispatchProxyAsync", "Dispa
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "demos", "demos", "{BEB93415-9983-47AC-B2A0-B8E97B4A46EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceA", "ServiceA\ServiceA.csproj", "{8582D0BC-E4AF-4915-B1FF-12C7000112A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceA", "ServiceA\ServiceA.csproj", "{8582D0BC-E4AF-4915-B1FF-12C7000112A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceB", "ServiceB\ServiceB.csproj", "{1BF68199-D43B-4DC0-A553-4621028194D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceB", "ServiceB\ServiceB.csproj", "{1BF68199-D43B-4DC0-A553-4621028194D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiEasyInvoker.Consul", "WebApiEasyInvoker.Consul\WebApiEasyInvoker.Consul.csproj", "{FB5D3608-B71C-4F3A-A01A-208C3F95208F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,10 @@ Global
 		{1BF68199-D43B-4DC0-A553-4621028194D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BF68199-D43B-4DC0-A553-4621028194D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BF68199-D43B-4DC0-A553-4621028194D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB5D3608-B71C-4F3A-A01A-208C3F95208F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB5D3608-B71C-4F3A-A01A-208C3F95208F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB5D3608-B71C-4F3A-A01A-208C3F95208F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB5D3608-B71C-4F3A-A01A-208C3F95208F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

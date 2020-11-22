@@ -5,7 +5,7 @@ using System.Text;
 
 namespace WebApiEasyInvoker.Models
 {
-    internal class MethodArgumentInfo
+    public class MethodArgumentInfo
     {
         public string Name { get; set; }
         public object Value { get; set; }

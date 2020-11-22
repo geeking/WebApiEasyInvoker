@@ -21,7 +21,7 @@ namespace ServiceA.Controllers
         {
             _logger = logger;
             //config if necessary
-            _serviceB = serviceB.Config(new HttpConfig { Logger = logger });
+            _serviceB = serviceB;
         }
 
         [HttpGet]

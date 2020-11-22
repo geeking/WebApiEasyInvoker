@@ -62,13 +62,13 @@ namespace DispatchProxyAsync
         private static readonly MethodInfo s_dispatchProxyInvokeAsyncTMethod = typeof(DispatchProxyAsync).GetTypeInfo().GetDeclaredMethod("InvokeAsyncT");
 
         // Returns a new instance of a proxy the derives from 'baseType' and implements 'interfaceType'
-        internal static object CreateProxyInstance(Type baseType, Type interfaceType)
+        internal static object CreateProxyInstance(Type baseType, Type interfaceType, object[] ctorInitArgs = null)
         {
             Debug.Assert(baseType != null);
             Debug.Assert(interfaceType != null);
 
             Type proxiedType = GetProxyType(baseType, interfaceType);
-            return Activator.CreateInstance(proxiedType, new DispatchProxyHandler());
+            return Activator.CreateInstance(proxiedType, new DispatchProxyHandler(), ctorInitArgs);
         }
 
         private static Type GetProxyType(Type baseType, Type interfaceType)

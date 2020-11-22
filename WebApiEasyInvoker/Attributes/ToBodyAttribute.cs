@@ -3,7 +3,7 @@
 namespace WebApiEasyInvoker.Attributes
 {
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    public class ToBodyAttribute : Attribute
+    public sealed class ToBodyAttribute : Attribute
     {
         public ToBodyAttribute(FormatType formatType = FormatType.Json)
         {

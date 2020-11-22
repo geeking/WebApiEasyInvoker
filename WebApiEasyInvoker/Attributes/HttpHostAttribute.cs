@@ -3,7 +3,7 @@
 namespace WebApiEasyInvoker.Attributes
 {
     [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
-    public class HttpHostAttribute : Attribute
+    public sealed class HttpHostAttribute : Attribute
     {
         public HttpHostAttribute(string httpHost)
         {

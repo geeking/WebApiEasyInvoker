@@ -11,6 +11,5 @@ namespace WebApiEasyInvoker.Config
     {
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(100);
         public HttpRequestHeaders RequestHeaders { get; set; }
-        public ILogger Logger { get; set; }
     }
 }

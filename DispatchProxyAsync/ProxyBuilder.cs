@@ -24,7 +24,6 @@ namespace DispatchProxyAsync
             _assembly = assembly;
             _tb = tb;
             _proxyBaseType = proxyBaseType;
-
             _fields = new List<FieldBuilder>();
             _fields.Add(tb.DefineField("_handler", typeof(DispatchProxyHandler), FieldAttributes.Private));
         }
@@ -43,30 +42,35 @@ namespace DispatchProxyAsync
 
         private void Complete()
         {
-            Type[] args = new Type[_fields.Count];
-            for (int i = 0; i < args.Length; i++)
+            var ctorArgLen = _fields.Count + 1;
+            Type[] ctorArgs = new Type[ctorArgLen];
+            for (int i = 0; i < _fields.Count; i++)
             {
-                args[i] = _fields[i].FieldType;
+                ctorArgs[i] = _fields[i].FieldType;
             }
-
-            ConstructorBuilder cb = _tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, args);
+            ctorArgs[ctorArgLen - 1] = typeof(object[]);
+            ConstructorBuilder cb = _tb.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, ctorArgs);
             ILGenerator il = cb.GetILGenerator();
 
             // chained ctor call
             ConstructorInfo baseCtor = _proxyBaseType.GetTypeInfo().DeclaredConstructors.SingleOrDefault(c => c.IsPublic && c.GetParameters().Length == 0);
             Debug.Assert(baseCtor != null);
-
+            // call base class ctor
             il.Emit(OpCodes.Ldarg_0);
             il.Emit(OpCodes.Call, baseCtor);
 
             // store all the fields
-            for (int i = 0; i < args.Length; i++)
+            for (int i = 0; i < _fields.Count; i++)
             {
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg, i + 1);
                 il.Emit(OpCodes.Stfld, _fields[i]);
             }
 
+            il.Emit(OpCodes.Ldarg_0);
+            // the last ctor argument is used for CtorInit method
+            il.Emit(OpCodes.Ldarg, ctorArgLen);
+            il.Emit(OpCodes.Callvirt, _proxyBaseType.GetMethod(nameof(DispatchProxyAsync.CtorInit)));
             il.Emit(OpCodes.Ret);
         }
 
@@ -290,7 +294,7 @@ namespace DispatchProxyAsync
             }
             return types;
         }
-        
+
     }
 
 }
