@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using WebApiEasyInvoker.Consul.Attributes;
+using WebApiEasyInvoker.Consul.LoadBalance;
 using WebApiEasyInvoker.Consul.Services;
 using WebApiEasyInvoker.Interfaces;
 using WebApiEasyInvoker.Models;
@@ -27,19 +28,24 @@ namespace WebApiEasyInvoker.Consul
             if (serviceAttribute != null)
             {
                 var serviceName = serviceAttribute.ServiceName;
-                var balanceType = serviceAttribute.BalanceType;
                 var pathAttribute = methodInfo.GetCustomAttribute<ConsulPathAttribute>();
                 if (pathAttribute != null)
                 {
                     var urlPath = pathAttribute.Path;
                     var httpMethod = pathAttribute.HttpMethod;
-
-                    var serviceInfo = _consulInfoProvider.GetServiceInfo(serviceName, balanceType);
+                    var loadBalance = LoadBalanceRepository.GetLoadBalance(methodInfo.DeclaringType.FullName);
+                    var serviceInfo = _consulInfoProvider.GetServiceInfo(serviceName, loadBalance);
                     if (serviceInfo == null)
                     {
                         throw new Exception($"Can't find {serviceName} in Consul");
                     }
-                    //todo
+                    var host = serviceInfo.Address.StartsWith("http") ? serviceInfo.Address : $"http://{serviceInfo.Address}";
+                    return new UrlTemplate
+                    {
+                        Host = $"{host}:{serviceInfo.ServicePort}",
+                        HttpMethod = httpMethod,
+                        Url = urlPath
+                    };
                 }
             }
 

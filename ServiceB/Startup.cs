@@ -28,7 +28,7 @@ namespace ServiceB
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime)
         {
             if (env.IsDevelopment())
             {
@@ -43,6 +43,17 @@ namespace ServiceB
             {
                 endpoints.MapControllers();
             });
+
+            ServiceEntity serviceEntity = new ServiceEntity
+            {
+                IP = Configuration["Service:IP"],
+                Port = Convert.ToInt32(Configuration["Service:Port"]),
+                HealthCheckUrl = Configuration["Service:HealthCheck"],
+                ServiceName = Configuration["Service:Name"],
+                ConsulIP = Configuration["Consul:IP"],
+                ConsulPort = Convert.ToInt32(Configuration["Consul:Port"])
+            };
+            app.RegisterConsul(lifetime, serviceEntity);
         }
     }
 }

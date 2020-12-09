@@ -15,13 +15,16 @@ namespace ServiceA.Controllers
     {
         private readonly ILogger<WeatherForecastController> _logger;
         private readonly IServiceB _serviceB;
+        private readonly IConsulServiceB _consulServiceB;
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger,
-            IServiceB serviceB)
+            IServiceB serviceB,
+            IConsulServiceB consulServiceB)
         {
             _logger = logger;
             //config if necessary
             _serviceB = serviceB;
+            _consulServiceB = consulServiceB;
         }
 
         [HttpGet]
@@ -29,6 +32,13 @@ namespace ServiceA.Controllers
         {
             var serviceBData = _serviceB.GetWeathers();
             return serviceBData;
+        }
+
+        [HttpGet("/test2")]
+        public IEnumerable<WeatherForecast> Test2()
+        {
+            var data = _consulServiceB.GetWeathers();
+            return data;
         }
     }
 }

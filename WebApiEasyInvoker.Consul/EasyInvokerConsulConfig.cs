@@ -8,5 +8,7 @@ namespace WebApiEasyInvoker.Consul
     {
         public string Address { get; set; }
         public string Token { get; set; }
+
+        public int RefreshMilliseconds { get; set; } = 4000;
     }
 }

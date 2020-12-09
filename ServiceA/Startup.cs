@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WebApiEasyInvoker;
+using WebApiEasyInvoker.Consul;
 
 namespace ServiceA
 {
@@ -27,7 +28,11 @@ namespace ServiceA
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddWebApiEasyInvoker();
+            services.AddWebApiEasyInvoker(new EasyInvokerConsulConfig
+            {
+                Address = "http://localhost:8500",
+                RefreshMilliseconds = 5000
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,6 +51,8 @@ namespace ServiceA
             {
                 endpoints.MapControllers();
             });
+
+
         }
     }
 }
