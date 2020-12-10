@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace WebApiEasyInvoker.Consul
+namespace WebApiEasyInvoker.Consul.LoadBalance
 {
     public enum BalanceType
     {
