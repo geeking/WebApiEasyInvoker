@@ -165,10 +165,27 @@ public class HttpConfig
     public ILogger Logger { get; set; }
 }
 ```
+# Use with Consul
+If you want to call *serviceA* which registed in Consul,you can install nuget `WebApiEasyInvoker.Consul` and use `AddWebApiEasyInvoker(EasyInvokerConsulConfig)` instead of `AddWebApiEasyInvoker()`
+
+```csharp
+services.AddWebApiEasyInvoker(new EasyInvokerConsulConfig
+{
+    Address = "http://localhost:8500"
+});
+```
+```csharp
+[ConsulService("serviceB", BalanceType.LeastConnection)]
+public interface IConsulServiceB : IWebApiInvoker<IConsulServiceB>
+{
+    [ConsulPath("/WeatherForecast", HttpMethodKind.Get)]
+    List<WeatherForecast> GetWeathers();
+}
+```
 
 # Future
 * Polly in build
-* Consul extend package
+* ~~Consul extend package~~  (Provided by `WebApiEasyInvoker.Consul`)
 * Eureka extend package
 * Etcd extend package
 * Zookeeper extend package
