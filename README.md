@@ -166,7 +166,7 @@ public class HttpConfig
 }
 ```
 # Use with Consul
-If you want to call *serviceA* which registed in Consul,you can install nuget `WebApiEasyInvoker.Consul` and use `AddWebApiEasyInvoker(EasyInvokerConsulConfig)` instead of `AddWebApiEasyInvoker()`
+If you want to call *serviceB* which registed in Consul,you can install nuget `WebApiEasyInvoker.Consul` and use `AddWebApiEasyInvoker(EasyInvokerConsulConfig)` instead of `AddWebApiEasyInvoker()`
 
 ```csharp
 services.AddWebApiEasyInvoker(new EasyInvokerConsulConfig
