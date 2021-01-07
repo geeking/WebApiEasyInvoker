@@ -11,11 +11,9 @@ namespace WebApiEasyInvoker.Consul.LoadBalance
         private int _count = 0;
         public ServiceInfo ChoseOne(IEnumerable<ServiceInfo> services)
         {
-            if (_count == int.MaxValue)
-            {
-                _count = 0;
-            }
+            Interlocked.CompareExchange(ref _count, 0, int.MaxValue);
             Interlocked.Increment(ref _count);
+            //At a very low probability, the index may be the same,but does't matter
             var index = _count % services.Count();
             return services.ElementAt(index);
         }
