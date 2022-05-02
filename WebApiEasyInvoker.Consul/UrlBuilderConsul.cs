@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Reflection;
-using System.Text;
 using WebApiEasyInvoker.Consul.Attributes;
 using WebApiEasyInvoker.Consul.LoadBalance;
 using WebApiEasyInvoker.Consul.Services;
@@ -12,15 +10,17 @@ using WebApiEasyInvoker.Utils;
 
 namespace WebApiEasyInvoker.Consul
 {
-    class UrlBuilderConsul : IUrlBuilder
+    internal class UrlBuilderConsul : IUrlBuilder
     {
         private readonly IConsulServiceInfoProvider _consulInfoProvider;
+        private readonly IConfiguration _configuration;
 
-        public UrlBuilderConsul(IConsulServiceInfoProvider consulInfoProvider)
+        public UrlBuilderConsul(IConsulServiceInfoProvider consulInfoProvider,
+            IConfiguration configuration)
         {
             _consulInfoProvider = consulInfoProvider;
+            _configuration = configuration;
         }
-
 
         public UrlTemplate GetUrlTemplate(MethodInfo methodInfo)
         {
@@ -49,7 +49,7 @@ namespace WebApiEasyInvoker.Consul
                 }
             }
 
-            return HttpRequestUtil.BuildUrlTemplate(methodInfo);
+            return HttpRequestUtil.BuildUrlTemplate(methodInfo, _configuration);
         }
     }
 }

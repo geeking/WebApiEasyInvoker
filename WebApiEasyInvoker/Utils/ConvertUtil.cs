@@ -26,7 +26,15 @@ namespace WebApiEasyInvoker.Utils
         {
             if (string.IsNullOrEmpty(input))
             {
-                return input;
+                if (destType.IsClass)
+                {
+                    return null;
+                }
+                if (destType.IsGenericType && typeof(Nullable<>) == destType.GetGenericTypeDefinition())
+                {
+                    return null;
+                }
+                throw new Exception($"Can't deserialize empty string to type:{destType.Name}");
             }
 
             var typeCode = Type.GetTypeCode(destType);

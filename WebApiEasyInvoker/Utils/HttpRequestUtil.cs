@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,12 +8,92 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using WebApiEasyInvoker.Attributes;
+using WebApiEasyInvoker.Interfaces;
 using WebApiEasyInvoker.Models;
 
 namespace WebApiEasyInvoker.Utils
 {
     public static class HttpRequestUtil
     {
+        public static UrlTemplate BuildUrlTemplate(MethodInfo methodInfo, IConfiguration configuration)
+        {
+            string host = null, url = null;
+            HttpMethod httpMethod = HttpMethod.Get;
+
+            var httpFullUrlAttribute = methodInfo.GetCustomAttribute<HttpFullUrlAttribute>();
+            if (httpFullUrlAttribute != null)
+            {
+                url = httpFullUrlAttribute.Url;
+                if (httpFullUrlAttribute.FromConfiguration)
+                {
+                    url = configuration.GetValue<string>(url);
+                }
+                httpMethod = httpFullUrlAttribute.HttpMethod;
+            }
+            else
+            {
+                var targetType = methodInfo.DeclaringType;
+                var httpHostAttribute = targetType.GetCustomAttribute<HttpHostAttribute>();
+                if (httpHostAttribute != null)
+                {
+                    var httpUrlAttribute = methodInfo.GetCustomAttribute<HttpUrlAttribute>();
+                    if (httpUrlAttribute == null)
+                    {
+                        throw new Exception($"Can't build request url for {methodInfo.Name}");
+                    }
+                    host = httpHostAttribute.HttpHost;
+                    if (httpHostAttribute.FromConfiguration)
+                    {
+                        host = configuration.GetValue<string>(host);
+                    }
+                    url = httpUrlAttribute.Url;
+                    if (httpUrlAttribute.FromConfiguration)
+                    {
+                        url = configuration.GetValue<string>(url);
+                    }
+                    httpMethod = httpUrlAttribute.HttpMethod;
+                }
+                else
+                {
+                    throw new Exception($"Can't build request url for {targetType.Name}");
+                }
+            }
+            return new UrlTemplate
+            {
+                Host = host,
+                Url = url,
+                HttpMethod = httpMethod
+            };
+        }
+
+        public static HttpRequestMessage BuildHttpRequestMessage(HttpRequestHeaders requestHeaders,
+            List<MethodArgumentInfo> argInfos,
+            UrlTemplate urlTemplate,
+            IBodyFormatter bodyFormatter)
+        {
+            var httpRequestMessage = new HttpRequestMessage();
+            if (requestHeaders != null)
+            {
+                foreach (var header in requestHeaders)
+                {
+                    httpRequestMessage.Headers.Add(header.Key, header.Value);
+                }
+            }
+            var fullUrl = GetHttpRequestUrl(urlTemplate, argInfos);
+            httpRequestMessage.RequestUri = new Uri(fullUrl);
+            httpRequestMessage.Method = urlTemplate.HttpMethod;
+            if (bodyFormatter == null)
+            {
+                httpRequestMessage.Content = GetHttpRequestContent(argInfos);
+            }
+            else
+            {
+                httpRequestMessage.Content = bodyFormatter.Serialize(argInfos);
+            }
+
+            return httpRequestMessage;
+        }
+
         private static string CombinUrlAndReplacePlaceholder(List<MethodArgumentInfo> argumentInfos, string host, string url)
         {
             if (string.IsNullOrEmpty(host) && string.IsNullOrEmpty(url))
@@ -33,7 +114,7 @@ namespace WebApiEasyInvoker.Utils
             foreach (var item in argumentInfos)
             {
                 //has ToBody or ToQuery Attribute,then jump
-                if (item.Attributes.Any())
+                if (item.ToQueryAttribute != null || item.ToBodyAttribute != null)
                 {
                     continue;
                 }
@@ -79,18 +160,15 @@ namespace WebApiEasyInvoker.Utils
         private static string GetQueryString(List<MethodArgumentInfo> argInfos)
         {
             var queryString = string.Empty;
-            foreach (var item in argInfos)
+            foreach (var item in argInfos.Where(x => x.ToQueryAttribute != null))
             {
-                if (item.Attributes.Where(a => a.GetType() == typeof(ToQueryAttribute)).Any())
-                {
-                    queryString += GetKeyValueString(item.Name, item.Type, item.Value, queryString);
-                    item.Used = true;
-                }
+                queryString += GetKeyValueString(item.Name, item.Type, item.Value, queryString);
+                item.Used = true;
             }
             return queryString;
         }
 
-        private static (HttpMethod HttpMethod, string FullUrl) GetHttpRequestMethodAndUrl(UrlTemplate urlTemplate, List<MethodArgumentInfo> argInfos)
+        private static string GetHttpRequestUrl(UrlTemplate urlTemplate, List<MethodArgumentInfo> argInfos)
         {
             var fullUrl = CombinUrlAndReplacePlaceholder(argInfos, urlTemplate.Host, urlTemplate.Url);
             if (string.IsNullOrEmpty(fullUrl))
@@ -109,7 +187,7 @@ namespace WebApiEasyInvoker.Utils
                     fullUrl += "?" + queryString;
                 }
             }
-            return (urlTemplate.HttpMethod, fullUrl);
+            return fullUrl;
         }
 
         private static HttpContent GetHttpRequestContent(List<MethodArgumentInfo> argInfos)
@@ -120,20 +198,21 @@ namespace WebApiEasyInvoker.Utils
             }
             var strContent = string.Empty;
             var httpContentType = "application/json";
-            var argInfo = argInfos.FirstOrDefault(ai => !ai.Used && ai.Attributes.Any(a => a.GetType() == typeof(ToBodyAttribute)));
+            var argInfo = argInfos.FirstOrDefault(ai => !ai.Used && ai.ToBodyAttribute != null);
             if (argInfo == null)
             {
                 //if no ToBodyAttribute,then select the first class type
                 //and use json formatter
                 argInfo = argInfos.FirstOrDefault(ai => !ai.Used && !ai.Type.IsValueOrStringType());
+                if (argInfo == null)
+                {
+                    return null;
+                }
                 strContent = ConvertUtil.SerializeObjectJson(argInfo.Value);
             }
             else
             {
-                var tobodyAtr = argInfo.Attributes
-                    .Where(a => a.GetType() == typeof(ToBodyAttribute))
-                    .Select(a => a as ToBodyAttribute)
-                    .First();
+                var tobodyAtr = argInfo.ToBodyAttribute;
                 if (tobodyAtr.FormatType == FormatType.Form)
                 {
                     strContent = GetKeyValueString(argInfo.Name, argInfo.Type, argInfo.Value, strContent);
@@ -148,63 +227,6 @@ namespace WebApiEasyInvoker.Utils
             HttpContent content = new StreamContent(new MemoryStream(contentBytes));
             content.Headers.Add("Content-Type", httpContentType);
             return content;
-        }
-
-        public static UrlTemplate BuildUrlTemplate(MethodInfo methodInfo)
-        {
-            string host = null, url = null;
-            HttpMethod httpMethod = HttpMethod.Get;
-
-            var httpFullUrlAttribute = methodInfo.GetCustomAttribute<HttpFullUrlAttribute>();
-            if (httpFullUrlAttribute != null)
-            {
-                url = httpFullUrlAttribute.Url;
-                httpMethod = httpFullUrlAttribute.HttpMethod;
-            }
-            else
-            {
-                var targetType = methodInfo.DeclaringType;
-                var httpHostAttribute = targetType.GetCustomAttribute<HttpHostAttribute>();
-                if (httpHostAttribute != null)
-                {
-                    var httpUrlAttribute = methodInfo.GetCustomAttribute<HttpUrlAttribute>();
-                    if (httpUrlAttribute == null)
-                    {
-                        throw new Exception($"Can't build request url for {methodInfo.Name}");
-                    }
-                    host = httpHostAttribute.HttpHost;
-                    url = httpUrlAttribute.Url;
-                    httpMethod = httpUrlAttribute.HttpMethod;
-                }
-                else
-                {
-                    throw new Exception($"Can't build request url for {targetType.Name}");
-                }
-            }
-            return new UrlTemplate
-            {
-                Host = host,
-                Url = url,
-                HttpMethod = httpMethod
-            };
-        }
-
-        public static HttpRequestMessage BuildHttpRequestMessage(HttpRequestHeaders requestHeaders, List<MethodArgumentInfo> argInfos, UrlTemplate urlTemplate)
-        {
-            var httpRequestMessage = new HttpRequestMessage();
-            if (requestHeaders != null)
-            {
-                foreach (var header in requestHeaders)
-                {
-                    httpRequestMessage.Headers.Add(header.Key, header.Value);
-                }
-            }
-            var (httpMethod, fullUrl) = GetHttpRequestMethodAndUrl(urlTemplate, argInfos);
-            httpRequestMessage.RequestUri = new Uri(fullUrl);
-            httpRequestMessage.Method = httpMethod;
-            httpRequestMessage.Content = GetHttpRequestContent(argInfos);
-
-            return httpRequestMessage;
         }
     }
 }

@@ -4,7 +4,7 @@
     "ServiceA": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "test",
       "applicationUrl": "http://localhost:5401",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

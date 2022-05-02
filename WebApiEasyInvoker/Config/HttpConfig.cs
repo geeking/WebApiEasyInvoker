@@ -9,6 +9,10 @@ namespace WebApiEasyInvoker.Config
     /// </summary>
     public class HttpConfig
     {
+        /// <summary>
+        /// the set for httpClient.Timeout
+        /// default 100 seconds
+        /// </summary>
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(100);
         public HttpRequestHeaders RequestHeaders { get; set; }
     }

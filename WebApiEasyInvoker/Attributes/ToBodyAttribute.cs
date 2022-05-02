@@ -1,4 +1,5 @@
 ﻿using System;
+using WebApiEasyInvoker.Interfaces;
 
 namespace WebApiEasyInvoker.Attributes
 {

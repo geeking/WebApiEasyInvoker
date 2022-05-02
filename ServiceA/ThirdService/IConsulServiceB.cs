@@ -11,5 +11,14 @@ namespace ServiceA.ThirdService
     {
         [ConsulPath("/WeatherForecast", HttpMethodKind.Get)]
         List<WeatherForecast> GetWeathers();
+
+        [ConsulPath("/WeatherForecast/{id}")]
+        WeatherForecast GetWeather(int id);
+
+        [ConsulPath("/WeatherForecast", HttpMethodKind.Post)]
+        bool Add([ToBody] WeatherForecast weatherForecast);
+
+        [ConsulPath("/WeatherForecast", HttpMethodKind.Put)]
+        bool Update([ToQuery] int id, [ToBody] WeatherForecast weatherForecast);
     }
 }

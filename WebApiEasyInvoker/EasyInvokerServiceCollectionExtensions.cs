@@ -19,14 +19,13 @@ namespace WebApiEasyInvoker
             services.TryAddScoped<IUrlBuilder, UrlBuilderDefault>();
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var serviceProvider = services.BuildServiceProvider();
             foreach (var assembie in assemblies)
             {
                 assembie.GetTypes().ToList().ForEach(t =>
                 {
                     if (t.IsInterface && t.GetInterface("IWebApiInvoker`1", true) != null)
                     {
-                        services.AddScoped(t, p => WebApiExecutionGenerator.Create(t, new object[] { serviceProvider }));
+                        services.AddScoped(t, p => WebApiExecutionGenerator.Create(t, new object[] { p }));
                     }
                 });
             }

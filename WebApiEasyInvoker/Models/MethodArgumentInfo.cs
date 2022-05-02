@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using WebApiEasyInvoker.Attributes;
 
 namespace WebApiEasyInvoker.Models
 {
@@ -11,6 +10,8 @@ namespace WebApiEasyInvoker.Models
         public object Value { get; set; }
         public bool Used { get; set; }
         public Type Type { get; set; }
-        public IEnumerable<Attribute> Attributes { get; set; }
+
+        public ToBodyAttribute ToBodyAttribute { get; set; }
+        public ToQueryAttribute ToQueryAttribute { get; set; }
     }
 }

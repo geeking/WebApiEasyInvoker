@@ -54,7 +54,7 @@ namespace WebApiEasyInvoker.Consul.Services
             });
 
 
-            _timer = new Timer(async x =>
+            _timer = new Timer(async _ =>
             {
                 try
                 {
@@ -69,7 +69,7 @@ namespace WebApiEasyInvoker.Consul.Services
                             var haveChanged = false;
                             foreach (var cacheInfo in cacheInfos)
                             {
-                                if (entries.Any(x => x.Service.ID == cacheInfo.ID))
+                                if (entries.Any(e => e.Service.ID == cacheInfo.ID))
                                 {
                                     newInfos.Add(cacheInfo);
                                 }
@@ -81,7 +81,7 @@ namespace WebApiEasyInvoker.Consul.Services
                             }
                             foreach (var entry in entries)
                             {
-                                if (cacheInfos.Any(x => x.ID == entry.Service.ID))
+                                if (cacheInfos.Any(e => e.ID == entry.Service.ID))
                                 {
                                     continue;
                                 }
