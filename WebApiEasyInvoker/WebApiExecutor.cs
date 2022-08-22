@@ -31,10 +31,11 @@ namespace WebApiEasyInvoker
             if (args != null)
             {
                 var provider = args[0] as IServiceProvider;
+                var httpClientName = args[1] as string;
                 _serviceProvider = provider;
                 var clientFactory = provider.GetService<IHttpClientFactory>();
                 Debug.Assert(clientFactory != null);
-                _httpClient = clientFactory.CreateClient();
+                _httpClient = clientFactory.CreateClient(httpClientName);
                 _logger = provider.GetService<ILogger<ITarget>>();
                 _urlBuilder = provider.GetService<IUrlBuilder>();
                 //_bodyFormatter=provider.GetService()

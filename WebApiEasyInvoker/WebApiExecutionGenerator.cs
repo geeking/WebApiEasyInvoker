@@ -13,12 +13,13 @@ namespace WebApiEasyInvoker
         /// build the executor for target interface
         /// </summary>
         /// <returns></returns>
-        public static ITarget Create<ITarget>() where ITarget : IWebApiInvoker<ITarget>
+        public static ITarget Create<ITarget>(string httpClientName = "") where ITarget : IWebApiInvoker<ITarget>
         {
             ServiceCollection serviceCollections = new ServiceCollection();
             serviceCollections.AddScoped<IUrlBuilder, UrlBuilderDefault>();
-            var serviceProvider = serviceCollections.AddHttpClient().BuildServiceProvider();
-            return DispatchProxyAsync.DispatchProxyAsync.Create<ITarget, WebApiExecutor<ITarget>>(new object[] { serviceProvider });
+            serviceCollections.AddHttpClient(httpClientName);
+            var serviceProvider = serviceCollections.BuildServiceProvider();
+            return DispatchProxyAsync.DispatchProxyAsync.Create<ITarget, WebApiExecutor<ITarget>>(new object[] { serviceProvider, httpClientName });
         }
 
         /// <summary>
@@ -33,5 +34,4 @@ namespace WebApiEasyInvoker
             return DispatchProxyAsync.DispatchProxyAsync.Create(baseType, interfaceType, ctorInitArgs);
         }
     }
-
 }
