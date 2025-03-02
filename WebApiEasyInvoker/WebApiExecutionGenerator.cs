@@ -19,7 +19,7 @@ namespace WebApiEasyInvoker
             serviceCollections.AddScoped<IUrlBuilder, UrlBuilderDefault>();
             serviceCollections.AddHttpClient(httpClientName);
             var serviceProvider = serviceCollections.BuildServiceProvider();
-            return DispatchProxyAsync.DispatchProxyAsync.Create<ITarget, WebApiExecutor<ITarget>>(new object[] {serviceProvider});
+            return DispatchProxyAsync.DispatchProxyAsync.Create<ITarget, WebApiExecutor<ITarget>>(new object[] { serviceProvider, httpClientName });
         }
 
         /// <summary>
