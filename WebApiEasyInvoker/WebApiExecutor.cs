@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -31,13 +32,13 @@ namespace WebApiEasyInvoker
             if (args != null)
             {
                 var provider = args[0] as IServiceProvider;
+                var httpClientName = args[1] as string;
                 _serviceProvider = provider;
                 var clientFactory = provider.GetService<IHttpClientFactory>();
                 Debug.Assert(clientFactory != null);
-                _httpClient = clientFactory.CreateClient();
+                _httpClient = clientFactory.CreateClient(httpClientName);
                 _logger = provider.GetService<ILogger<ITarget>>();
                 _urlBuilder = provider.GetService<IUrlBuilder>();
-                //_bodyFormatter=provider.GetService()
             }
         }
 
@@ -52,7 +53,7 @@ namespace WebApiEasyInvoker
             }
             var argInfos = InitArgumentInfos(targetMethod.GetParameters(), args);
             var urlTemplate = _urlBuilder.GetUrlTemplate(targetMethod);
-            var bodyFormatter = GetCustomBodyFormatter(targetMethod);
+            var bodyFormatter = HttpRequestUtil.GetCustomBodyFormatter(targetMethod,_serviceProvider);
 
             var requestMessage = HttpRequestUtil.BuildHttpRequestMessage(_httpConfig?.RequestHeaders, argInfos, urlTemplate, bodyFormatter);
             _logger?.LogDebug("Request url:{0} {1}", requestMessage.Method, requestMessage.RequestUri.AbsoluteUri);
@@ -66,7 +67,7 @@ namespace WebApiEasyInvoker
         {
             var argInfos = InitArgumentInfos(targetMethod.GetParameters(), args);
             var urlTemplate = _urlBuilder.GetUrlTemplate(targetMethod);
-            var bodyFormatter = GetCustomBodyFormatter(targetMethod);
+            var bodyFormatter = HttpRequestUtil.GetCustomBodyFormatter(targetMethod,_serviceProvider);
 
             var requestMessage = HttpRequestUtil.BuildHttpRequestMessage(_httpConfig?.RequestHeaders, argInfos, urlTemplate, bodyFormatter);
             _logger?.LogDebug("Request url:{0} {1}", requestMessage.Method, requestMessage.RequestUri.AbsoluteUri);
@@ -78,7 +79,7 @@ namespace WebApiEasyInvoker
         {
             var argInfos = InitArgumentInfos(targetMethod.GetParameters(), args);
             var urlTemplate = _urlBuilder.GetUrlTemplate(targetMethod);
-            var bodyFormatter = GetCustomBodyFormatter(targetMethod);
+            var bodyFormatter = HttpRequestUtil.GetCustomBodyFormatter(targetMethod,_serviceProvider);
 
             var requestMessage = HttpRequestUtil.BuildHttpRequestMessage(_httpConfig?.RequestHeaders, argInfos, urlTemplate, bodyFormatter);
             _logger?.LogDebug("Request url:{0} {1}", requestMessage.Method, requestMessage.RequestUri.AbsoluteUri);
@@ -104,38 +105,19 @@ namespace WebApiEasyInvoker
             {
                 return argumentInfos;
             }
-            for (int i = 0; i < paramInfos.Length; i++)
+
+            argumentInfos.AddRange(paramInfos.Select((t, i) => new MethodArgumentInfo
             {
-                argumentInfos.Add(new MethodArgumentInfo
-                {
-                    Name = paramInfos[i].Name,
-                    Value = values[i],
-                    ToQueryAttribute = paramInfos[i].GetCustomAttribute<ToQueryAttribute>(),
-                    ToBodyAttribute = paramInfos[i].GetCustomAttribute<ToBodyAttribute>(),
-                    Type = paramInfos[i].ParameterType,
-                    Used = false
-                });
-            }
+                Name = t.Name,
+                Value = values[i],
+                ToQueryAttribute = t.GetCustomAttribute<ToQueryAttribute>(),
+                ToBodyAttribute = t.GetCustomAttribute<ToBodyAttribute>(),
+                Type = t.ParameterType,
+                Used = false
+            }));
             return argumentInfos;
         }
 
-        private IBodyFormatter GetCustomBodyFormatter(MethodInfo methodInfo)
-        {
-            var formatterAttribute = methodInfo.GetCustomAttribute<BodyFormatterAttribute>();
-            if (formatterAttribute == null)
-            {
-                formatterAttribute = methodInfo.DeclaringType.GetCustomAttribute<BodyFormatterAttribute>();
-            }
-            if (formatterAttribute == null)
-            {
-                return null;
-            }
-            else
-            {
-                var formatterType = formatterAttribute.FormatterType;
-                var formatter = _serviceProvider.GetRequiredService(formatterType) as IBodyFormatter;
-                return formatter;
-            }
-        }
+        
     }
 }

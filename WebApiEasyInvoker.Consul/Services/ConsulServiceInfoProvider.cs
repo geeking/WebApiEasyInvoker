@@ -20,6 +20,7 @@ namespace WebApiEasyInvoker.Consul.Services
                 return null;
             }
             ServiceInfo result = loadBalance.ChoseOne(infos);
+            result.AccessCount++;
             return result;
         }
     }

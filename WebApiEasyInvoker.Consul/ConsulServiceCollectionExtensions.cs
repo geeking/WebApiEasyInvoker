@@ -14,16 +14,17 @@ namespace WebApiEasyInvoker.Consul
 {
     public static class ConsulServiceCollectionExtensions
     {
-        public static void AddWebApiEasyInvoker(this IServiceCollection services, EasyInvokerConsulConfig consulConfig)
+        public static void AddWebApiEasyInvoker(this IServiceCollection services, EasyInvokerConsulConfig consulConfig, string httpClientName = "")
         {
             if (consulConfig == null)
             {
                 throw new NullReferenceException("EasyInvokerConsulConfig is null");
             }
+
             services.TryAddScoped<IUrlBuilder, UrlBuilderConsul>();
             services.AddSingleton<IConsulServiceRefresh, ConsulServiceRefresh>();
             services.AddSingleton<IConsulServiceInfoProvider, ConsulServiceInfoProvider>();
-            services.AddWebApiEasyInvoker();
+            services.AddWebApiEasyInvoker(httpClientName);
 
             var serviceRefresh = services.BuildServiceProvider().GetService<IConsulServiceRefresh>();
             var serviceList = new List<string>();
@@ -60,16 +61,17 @@ namespace WebApiEasyInvoker.Consul
                                     loadBalance = new LoadBalanceFirst();
                                     break;
                             }
+
                             balanceDic.Add(t.FullName, loadBalance);
                             if (!serviceList.Contains(attribute.ServiceName))
                             {
                                 serviceList.Add(attribute.ServiceName);
                             }
                         }
-
                     }
                 });
             }
+
             LoadBalanceRepository.LoadData(balanceDic);
             serviceRefresh.LoadServices(serviceList);
             serviceRefresh.Start(consulConfig);

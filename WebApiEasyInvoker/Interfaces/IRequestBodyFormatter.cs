@@ -4,7 +4,7 @@ using WebApiEasyInvoker.Models;
 
 namespace WebApiEasyInvoker.Interfaces
 {
-    public interface IBodyFormatter
+    public interface IRequestBodyFormatter
     {
         HttpContent Serialize(List<MethodArgumentInfo> argInfos);
     }

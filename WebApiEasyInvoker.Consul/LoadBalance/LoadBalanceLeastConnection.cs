@@ -13,7 +13,6 @@ namespace WebApiEasyInvoker.Consul.LoadBalance
             {
                 var sortedServices = services.OrderBy(x => x.AccessCount);
                 var service = sortedServices.First();
-                service.AccessCount++;
                 return service;
             }
         }

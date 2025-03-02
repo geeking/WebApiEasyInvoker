@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 using WebApiEasyInvoker.Attributes;
 using WebApiEasyInvoker.Interfaces;
 using WebApiEasyInvoker.Models;
@@ -15,8 +17,16 @@ namespace WebApiEasyInvoker.Utils
 {
     public static class HttpRequestUtil
     {
+        private static readonly ConcurrentDictionary<MethodInfo, UrlTemplate> _urlTemplates = new ConcurrentDictionary<MethodInfo, UrlTemplate>();
+        private static readonly ConcurrentDictionary<MethodInfo, IRequestBodyFormatter> _requestBodyFormatterPool = new ConcurrentDictionary<MethodInfo, IRequestBodyFormatter>();
+
         public static UrlTemplate BuildUrlTemplate(MethodInfo methodInfo, IConfiguration configuration)
         {
+            if (_urlTemplates.TryGetValue(methodInfo, out var urlTemplate))
+            {
+                return urlTemplate;
+            }
+
             string host = null, url = null;
             HttpMethod httpMethod = HttpMethod.Get;
 
@@ -28,6 +38,7 @@ namespace WebApiEasyInvoker.Utils
                 {
                     url = configuration.GetValue<string>(url);
                 }
+
                 httpMethod = httpFullUrlAttribute.HttpMethod;
             }
             else
@@ -41,16 +52,19 @@ namespace WebApiEasyInvoker.Utils
                     {
                         throw new Exception($"Can't build request url for {methodInfo.Name}");
                     }
+
                     host = httpHostAttribute.HttpHost;
                     if (httpHostAttribute.FromConfiguration)
                     {
                         host = configuration.GetValue<string>(host);
                     }
+
                     url = httpUrlAttribute.Url;
                     if (httpUrlAttribute.FromConfiguration)
                     {
                         url = configuration.GetValue<string>(url);
                     }
+
                     httpMethod = httpUrlAttribute.HttpMethod;
                 }
                 else
@@ -58,18 +72,46 @@ namespace WebApiEasyInvoker.Utils
                     throw new Exception($"Can't build request url for {targetType.Name}");
                 }
             }
-            return new UrlTemplate
+
+            var template = new UrlTemplate
             {
                 Host = host,
                 Url = url,
                 HttpMethod = httpMethod
             };
+
+            _urlTemplates.TryAdd(methodInfo, template);
+            return template;
         }
 
+        public static IRequestBodyFormatter GetCustomBodyFormatter(MethodInfo methodInfo, IServiceProvider serviceProvider)
+        {
+            if (_requestBodyFormatterPool.TryGetValue(methodInfo, out var requestBodyFormatter))
+            {
+                return requestBodyFormatter;
+            }
+
+            var formatterAttribute = methodInfo.GetCustomAttribute<RequestBodyFormatterAttribute>() 
+                                     ?? methodInfo.DeclaringType?.GetCustomAttribute<RequestBodyFormatterAttribute>();
+
+            if (formatterAttribute == null)
+            {
+                _requestBodyFormatterPool.TryAdd(methodInfo, null);
+                return null;
+            }
+            else
+            {
+                var formatterType = formatterAttribute.FormatterType;
+                var formatter = serviceProvider.GetRequiredService(formatterType) as IRequestBodyFormatter;
+                _requestBodyFormatterPool.TryAdd(methodInfo, formatter);
+                return formatter;
+            }
+        }
+        
         public static HttpRequestMessage BuildHttpRequestMessage(HttpRequestHeaders requestHeaders,
             List<MethodArgumentInfo> argInfos,
             UrlTemplate urlTemplate,
-            IBodyFormatter bodyFormatter)
+            IRequestBodyFormatter requestBodyFormatter)
         {
             var httpRequestMessage = new HttpRequestMessage();
             if (requestHeaders != null)
@@ -79,27 +121,30 @@ namespace WebApiEasyInvoker.Utils
                     httpRequestMessage.Headers.Add(header.Key, header.Value);
                 }
             }
+
             var fullUrl = GetHttpRequestUrl(urlTemplate, argInfos);
             httpRequestMessage.RequestUri = new Uri(fullUrl);
             httpRequestMessage.Method = urlTemplate.HttpMethod;
-            if (bodyFormatter == null)
+            if (requestBodyFormatter == null)
             {
                 httpRequestMessage.Content = GetHttpRequestContent(argInfos);
             }
             else
             {
-                httpRequestMessage.Content = bodyFormatter.Serialize(argInfos);
+                httpRequestMessage.Content = requestBodyFormatter.Serialize(argInfos);
             }
 
             return httpRequestMessage;
         }
 
+        
         private static string CombinUrlAndReplacePlaceholder(List<MethodArgumentInfo> argumentInfos, string host, string url)
         {
             if (string.IsNullOrEmpty(host) && string.IsNullOrEmpty(url))
             {
                 return null;
             }
+
             if (!string.IsNullOrWhiteSpace(host))
             {
                 if (string.IsNullOrEmpty(url))
@@ -111,6 +156,7 @@ namespace WebApiEasyInvoker.Utils
                     url = $"{host.TrimEnd('/')}/{url.TrimStart('/')}";
                 }
             }
+
             foreach (var item in argumentInfos)
             {
                 //has ToBody or ToQuery Attribute,then jump
@@ -118,12 +164,14 @@ namespace WebApiEasyInvoker.Utils
                 {
                     continue;
                 }
+
                 if (item.Type.IsValueOrStringType())
                 {
                     url = url.Replace($"{{{item.Name}}}", $"{item.Value}");
                     item.Used = true;
                 }
             }
+
             return url;
         }
 
@@ -133,6 +181,7 @@ namespace WebApiEasyInvoker.Utils
             {
                 return kvStr;
             }
+
             if (argType.IsValueOrStringType())
             {
                 if (!string.IsNullOrEmpty(instance.ToString()))
@@ -154,6 +203,7 @@ namespace WebApiEasyInvoker.Utils
                     kvStr = GetKeyValueString(property.Name, property.PropertyType, property.GetValue(instance), kvStr);
                 }
             }
+
             return kvStr;
         }
 
@@ -165,6 +215,7 @@ namespace WebApiEasyInvoker.Utils
                 queryString += GetKeyValueString(item.Name, item.Type, item.Value, queryString);
                 item.Used = true;
             }
+
             return queryString;
         }
 
@@ -175,18 +226,20 @@ namespace WebApiEasyInvoker.Utils
             {
                 throw new Exception("Request url is null or empty");
             }
+
             var queryString = GetQueryString(argInfos);
             if (!string.IsNullOrEmpty(queryString))
             {
                 if (fullUrl.Contains("?"))
                 {
-                    fullUrl = fullUrl.TrimEnd(new char[] { '&' }) + "&" + queryString;
+                    fullUrl = fullUrl.TrimEnd(new char[] {'&'}) + "&" + queryString;
                 }
                 else
                 {
                     fullUrl += "?" + queryString;
                 }
             }
+
             return fullUrl;
         }
 
@@ -196,6 +249,7 @@ namespace WebApiEasyInvoker.Utils
             {
                 return null;
             }
+
             var strContent = string.Empty;
             var httpContentType = "application/json";
             var argInfo = argInfos.FirstOrDefault(ai => !ai.Used && ai.ToBodyAttribute != null);
@@ -208,6 +262,7 @@ namespace WebApiEasyInvoker.Utils
                 {
                     return null;
                 }
+
                 strContent = ConvertUtil.SerializeObjectJson(argInfo.Value);
             }
             else
@@ -223,10 +278,14 @@ namespace WebApiEasyInvoker.Utils
                     strContent = ConvertUtil.SerializeObjectJson(argInfo.Value);
                 }
             }
+
             var contentBytes = Encoding.UTF8.GetBytes(strContent);
             HttpContent content = new StreamContent(new MemoryStream(contentBytes));
             content.Headers.Add("Content-Type", httpContentType);
             return content;
         }
+
+
+        
     }
 }
